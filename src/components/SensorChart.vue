@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Line } from 'vue-chartjs'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js'
+import { computed } from 'vue'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
 
@@ -10,8 +11,8 @@ const props = defineProps<{
   color: string
 }>()
 
-const chartData = {
-  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+const chartData = computed(() => ({
+  labels: props.data.map((_, index) => index + 1),
   datasets: [
     {
       label: props.label,
@@ -22,7 +23,7 @@ const chartData = {
       fill: true
     }
   ]
-}
+}))
 
 const chartOptions = {
   responsive: true,
