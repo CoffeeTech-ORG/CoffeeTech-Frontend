@@ -5,7 +5,7 @@ import Dashboard from '../views/Dashboard.vue'
 import Settings from '../views/Settings.vue'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory('#'),
   routes: [
     {
       path: '/',
