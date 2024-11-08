@@ -1,0 +1,1 @@
+{"root":["./src/main.ts","./src/vite-env.d.ts","./src/router/index.ts","./src/stores/auth.ts","./src/stores/sensors.ts","./src/app.vue","./src/components/dashboardmetric.vue","./src/components/helloworld.vue","./src/components/sensorchart.vue","./src/views/dashboard.vue","./src/views/login.vue","./src/views/register.vue","./src/views/settings.vue"],"version":"5.6.3"}
