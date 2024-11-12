@@ -13,7 +13,7 @@ interface SensorState {
   soilMoisture: SensorData[]
   loading: boolean
   error: string | null
-  updateInterval: NodeJS.Timer | null
+  updateInterval: number | null
 }
 
 export const useSensorsStore = defineStore('sensors', {
@@ -31,16 +31,30 @@ export const useSensorsStore = defineStore('sensors', {
     async fetchSensorData() {
       try {
         this.loading = true
-        const response = await axios.get('https://coffeetech-api-netcore.azurewebsites.net/api/sensors/data', {
+        const response = await axios.get('https://coffeetech-api-netcore.azurewebsites.net/api/v1/data-records', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         })
+        console.log('Data Records:', response.data)
         
-        this.humidity = response.data.humidity
-        this.temperature = response.data.temperature
-        this.precipitation = response.data.precipitation
-        this.soilMoisture = response.data.soilMoisture
+        const dataRecords = response.data
+        this.humidity = dataRecords.map((record: any) => ({
+          value: record.airHumidityPercent,
+          timestamp: record.timestamp
+        }))
+        this.temperature = dataRecords.map((record: any) => ({
+          value: record.celciusGradeTemperature,
+          timestamp: record.timestamp
+        }))
+        this.soilMoisture = dataRecords.map((record: any) => ({
+          value: record.soilHumidityPercent,
+          timestamp: record.timestamp
+        }))
+        this.precipitation = dataRecords.map((record: any) => ({
+          value: record.precipitationDetected,
+          timestamp: record.timestamp
+        }))
       } catch (error: any) {
         this.error = error.response?.data?.message || 'Failed to fetch sensor data'
       } finally {
@@ -52,7 +66,7 @@ export const useSensorsStore = defineStore('sensors', {
       this.stopRealtimeUpdates()
       this.updateInterval = setInterval(() => {
         this.fetchSensorData()
-      }, interval)
+      }, interval) as unknown as number
     },
 
     stopRealtimeUpdates() {
