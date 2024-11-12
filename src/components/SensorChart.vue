@@ -34,8 +34,19 @@ const chartOptions = {
     }
   },
   scales: {
+    x: {
+      beginAtZero: true,
+      title: {
+        display: true,
+        text: 'Data Insertion'
+      }
+    },
     y: {
-      beginAtZero: true
+      beginAtZero: true,
+      title: {
+        display: true,
+        text: 'Percentage'
+      }
     }
   }
 }
@@ -46,3 +57,19 @@ const chartOptions = {
     <Line :data="chartData" :options="chartOptions" />
   </div>
 </template>
+
+<style scoped>
+.legend {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.legend-color {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+  border-radius: 50%;
+}
+</style>
