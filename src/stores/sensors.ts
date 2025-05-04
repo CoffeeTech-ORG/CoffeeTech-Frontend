@@ -31,7 +31,7 @@ export const useSensorsStore = defineStore('sensors', {
     async fetchSensorData() {
       try {
         this.loading = true
-        const response = await axios.get('https://coffeetech-api-netcore.azurewebsites.net/api/v1/data-records', {
+        const response = await axios.get('https://coffeetech-netcoreappweb-f6hwc3fph9hndhhg.centralus-01.azurewebsites.net/api/v1/data-records', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }

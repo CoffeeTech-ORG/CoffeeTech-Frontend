@@ -28,7 +28,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         this.loading = true
         this.error = null
-        const response = await axios.post('https://coffeetech-api-netcore.azurewebsites.net/api/v1/authentication/sign-in', {
+        const response = await axios.post('https://coffeetech-netcoreappweb-f6hwc3fph9hndhhg.centralus-01.azurewebsites.net/api/v1/authentication/sign-in', {
           email,
           password
         })
@@ -49,7 +49,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         this.loading = true
         this.error = null
-        await axios.post('https://coffeetech-api-netcore.azurewebsites.net/api/v1/authentication/sign-up', {
+        await axios.post('https://coffeetech-netcoreappweb-f6hwc3fph9hndhhg.centralus-01.azurewebsites.net/api/v1/authentication/sign-up', {
           username,
           email,
           rolId: 1,
