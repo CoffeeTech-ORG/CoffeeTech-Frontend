@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { Farm as FarmFromStore, Section as SectionFromStore, useFarmsStore } from '../stores/farms';
 import { useSectionsStore } from '../stores/sections';
-//import { Device as DeviceFromStore, useDevicesStore } from '../stores/useDevicesStore';
+import { Device as useDevicesStore } from '../stores/useDevicesStore';
 import { useAssignmentsStore } from '../stores/useAssignmentsStore';
 import { useSensorsStore, RawDataRecord } from '../stores/sensors';
 import SensorChart from '../components/SensorChart.vue';
