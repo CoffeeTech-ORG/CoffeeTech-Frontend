@@ -4,12 +4,11 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { Farm as FarmFromStore, Section as SectionFromStore, useFarmsStore } from '../stores/farms';
 import { useSectionsStore } from '../stores/sections';
-import { Device as useDevicesStore } from '../stores/useDevicesStore';
+import { useDevicesStore } from '../stores/useDevicesStore';
 import { useAssignmentsStore } from '../stores/useAssignmentsStore';
 import { useSensorsStore, RawDataRecord } from '../stores/sensors';
 import SensorChart from '../components/SensorChart.vue';
-// Import XLSX
-import * as XLSX from 'xlsx'; // Import the xlsx library
+import * as XLSX from 'xlsx';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -19,7 +18,6 @@ const devicesStore = useDevicesStore();
 const assignmentsStore = useAssignmentsStore();
 const sensorsStore = useSensorsStore();
 
-// --- Local Interface Definitions for Dashboard (keep as is) ---
 interface DashboardDevice {
   id: number;
   dataRecordId: number;
@@ -39,7 +37,6 @@ interface DashboardFarm {
   location: string;
   sections?: DashboardSection[];
 }
-// --- End of Local Interface Definitions ---
 
 const selectedFarm = ref<DashboardFarm | null>(null);
 const selectedSection = ref<DashboardSection | null>(null);
@@ -48,10 +45,10 @@ const sensorTypesForChart = ref([
   { key: 'celciusGradeTemperature' as keyof RawDataRecord, label: 'Temperature', color: '#FF6384', unit: '°C' },
   { key: 'airHumidityPercent' as keyof RawDataRecord, label: 'Air Humidity', color: '#36A2EB', unit: '%' },
   { key: 'soilHumidityPercent' as keyof RawDataRecord, label: 'Soil Moisture', color: '#FFCE56', unit: '%' },
-  { key: 'nitrogen' as keyof RawDataRecord, label: 'Nitrogen', color: '#4BC0C0', unit: 'ppm' },
-  { key: 'phosphorus' as keyof RawDataRecord, label: 'Phosphorus', color: '#9966FF', unit: 'ppm' },
-  { key: 'potassium' as keyof RawDataRecord, label: 'Potassium', color: '#FF9F40', unit: 'ppm' },
-  // { key: 'precipitationDetected' as keyof RawDataRecord, label: 'Precipitation', color: '#C9CBCF', unit: '' },
+  { key: 'nitrogen' as keyof RawDataRecord, label: 'Nitrogen', color: '#4BC0C0', unit: 'mg/kg' },
+  { key: 'phosphorus' as keyof RawDataRecord, label: 'Phosphorus', color: '#9966FF', unit: 'mg/kg' },
+  { key: 'potassium' as keyof RawDataRecord, label: 'Potassium', color: '#FF9F40', unit: 'mg/kg' },
+  { key: 'precipitationDetected' as keyof RawDataRecord, label: 'Precipitation', color: '#C9CBCF', unit: '' },
 ]);
 
 const isLoadingData = computed(() =>
@@ -139,44 +136,41 @@ function downloadExcel() {
     return;
   }
 
-  // 1. Determine which records to include
   let recordsToExport: RawDataRecord[] = [];
-  //let reportTitle = 'All Sensor Data Report';
+  let reportTitle = 'All Sensor Data Report';
   let fileName = 'AllSensorDataReport.xlsx';
 
   if (selectedSection.value && selectedSection.value.devices) {
-    // Report for the selected section
     const sectionDeviceHubIds = selectedSection.value.devices.map(d => d.deviceHubId);
-    recordsToExport = sensorsStore.allRecords.filter(record => 
+    recordsToExport = sensorsStore.allRecords.filter(record =>
       record.deviceHubId && sectionDeviceHubIds.includes(record.deviceHubId)
     );
-    reportTitle = `Sensor Data for Section ${selectedSection.value.name}`;
+    reportTitle = `Sensor Data for Section: ${selectedSection.value.name}`;
     fileName = `Section_${selectedSection.value.name.replace(/\s+/g, '_')}_Report.xlsx`;
     if (recordsToExport.length === 0) {
-        alert(`No sensor data found for section ${selectedSection.value.name}.`);
-        return;
+      alert(`No sensor data found for section ${selectedSection.value.name}.`);
+      return;
     }
   } else if (selectedFarm.value && selectedFarm.value.sections) {
-    // Report for the selected farm (all its sections' devices)
     const farmDeviceHubIds: string[] = [];
     selectedFarm.value.sections.forEach(section => {
-        section.devices?.forEach(device => {
-            if (device.deviceHubId) farmDeviceHubIds.push(device.deviceHubId);
-        });
+      section.devices?.forEach(device => {
+        if (device.deviceHubId) farmDeviceHubIds.push(device.deviceHubId);
+      });
     });
     const uniqueFarmDeviceHubIds = [...new Set(farmDeviceHubIds)];
-    recordsToExport = sensorsStore.allRecords.filter(record => 
+    recordsToExport = sensorsStore.allRecords.filter(record =>
       record.deviceHubId && uniqueFarmDeviceHubIds.includes(record.deviceHubId)
     );
-    reportTitle = `Sensor Data for Farm ${selectedFarm.value.name}`;
+    reportTitle = `Sensor Data for Farm: ${selectedFarm.value.name}`;
     fileName = `Farm_${selectedFarm.value.name.replace(/\s+/g, '_')}_Report.xlsx`;
-     if (recordsToExport.length === 0) {
-        alert(`No sensor data found for farm ${selectedFarm.value.name}.`);
-        return;
+    if (recordsToExport.length === 0) {
+      alert(`No sensor data found for farm ${selectedFarm.value.name}.`);
+      return;
     }
   } else {
-    // Report for all data if no specific farm/section is selected
-    recordsToExport = [...sensorsStore.allRecords]; // Create a shallow copy
+    recordsToExport = [...sensorsStore.allRecords];
+    // reportTitle remains 'All Sensor Data Report'
   }
 
   if (recordsToExport.length === 0) {
@@ -184,25 +178,66 @@ function downloadExcel() {
     return;
   }
 
-  // 2. Map data to the desired Excel format
-  const reportData = recordsToExport.map(record => ({
-    'Timestamp': new Date(record.timestamp).toLocaleString(),
-    'Device Hub ID': record.deviceHubId || 'N/A',
-    'Temperature (°C)': record.celciusGradeTemperature,
-    'Air Humidity (%)': record.airHumidityPercent,
-    'Soil Humidity (%)': record.soilHumidityPercent,
-    'Nitrogen (ppm)': record.nitrogen,
-    'Phosphorus (ppm)': record.phosphorus,
-    'Potassium (ppm)': record.potassium,
-    'Precipitation': record.precipitationDetected === 1 ? 'Detected' : 'Not Detected',
-    // Add other fields from RawDataRecord if needed
-  }));
+  // 1. Define Headers for the data table
+  const headers = [
+    'Timestamp', 'Device Hub ID', 'Temperature (°C)', 'Air Humidity (%)',
+    'Soil Humidity (%)', 'Nitrogen (ppm)', 'Phosphorus (ppm)', 'Potassium (ppm)', 'Precipitation'
+  ];
+
+  // 2. Map recordsToExport to data rows (arrays)
+  const dataRows = recordsToExport.map(record => [
+    new Date(record.timestamp).toLocaleString(),
+    record.deviceHubId || 'N/A',
+    record.celciusGradeTemperature,
+    record.airHumidityPercent,
+    record.soilHumidityPercent,
+    record.nitrogen,
+    record.phosphorus,
+    record.potassium,
+    record.precipitationDetected === 1 ? 'Detected' : 'Not Detected',
+  ]);
+
+  // 3. Construct the full sheet data as an Array of Arrays (AoA)
+  const sheetDataAoA = [
+    [reportTitle], // Title row (reportTitle is now used here)
+    headers,       // Header row for the data table
+    ...dataRows    // Actual data rows
+  ];
 
   const workbook = XLSX.utils.book_new();
-  const worksheet = XLSX.utils.json_to_sheet(reportData);
+  const worksheet = XLSX.utils.aoa_to_sheet(sheetDataAoA);
 
-  // 3. Set column widths (optional, but good for readability)
-  // Adjust wch (width in characters) as needed
+  // 4. Merge cells for the title (Row 1 in Excel, which is index 0 in sheetDataAoA)
+  if (headers.length > 0) {
+    worksheet['!merges'] = worksheet['!merges'] || [];
+    worksheet['!merges'].push({
+      s: { r: 0, c: 0 }, // Start cell (A1)
+      e: { r: 0, c: headers.length - 1 } // End cell (e.g., I1 if 9 headers)
+    });
+  }
+
+  // 5. Style the title cell (A1)
+  if (worksheet['A1']) {
+    worksheet['A1'].s = {
+      font: { sz: 16, bold: true, color: { rgb: "000000" } }, // Black, bold, size 16
+      alignment: { horizontal: "center", vertical: "center" },
+      fill: { fgColor: { rgb: "F0F0F0" } } // Light grey background
+    };
+  }
+
+  // 6. Style data header row (Row 2 in Excel, which is index 1 in sheetDataAoA)
+  for (let C = 0; C < headers.length; ++C) {
+    const cellRef = XLSX.utils.encode_cell({ r: 1, c: C }); // r:1 is the second row (data headers)
+    if (worksheet[cellRef]) {
+      worksheet[cellRef].s = {
+        fill: { fgColor: { rgb: "008080" } }, // Teal background
+        font: { color: { rgb: "FFFFFF" }, bold: true }, // White, bold text
+        alignment: { horizontal: "center", vertical: "center" }
+      };
+    }
+  }
+
+  // 7. Set column widths (applied to the whole column)
   worksheet['!cols'] = [
     { wch: 22 }, // Timestamp
     { wch: 20 }, // Device Hub ID
@@ -215,21 +250,7 @@ function downloadExcel() {
     { wch: 15 }, // Precipitation
   ];
 
-  // 4. Style header row
-  const headerCells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'I1']; // Adjust based on your columns
-  headerCells.forEach(cellRef => {
-    if (worksheet[cellRef]) {
-      worksheet[cellRef].s = {
-        fill: { fgColor: { rgb: "008080" } }, // Teal background
-        font: { color: { rgb: "FFFFFF" }, bold: true }, // White, bold text
-        alignment: { horizontal: "center", vertical: "center" }
-      };
-    }
-  });
-
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Sensor Data'); // Sheet name
-
-  // 5. Write the file
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Sensor Data');
   XLSX.writeFile(workbook, fileName);
 }
 // --- END OF EXCEL DOWNLOAD FUNCTION ---
